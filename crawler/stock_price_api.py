@@ -1,6 +1,44 @@
 import requests
+import time
 
 
+
+def crawl_and_save_months_prices(stock_id, year, months, stock_type='twse'):
+    assert stock_type in {'twse', 'tpex'}
+    price_key = 'data' if stock_type == 'twse' else 'aaData'
+    for month in months:
+        print(f'{stock_id} - {year} - {month}')
+        if stock_type == 'twse':
+            results = request_twse_prices(stock_id, year, month).json()
+        else:
+            results = request_tpex_prices(stock_id, year, month).json()
+        if no_data(results, stock_type):
+            time.sleep(10)
+            continue
+        for price in preprocess_prices(results[price_key], stock_type):
+            yield price
+        time.sleep(10)
+    return
+
+def preprocess_prices(prices, stock_type='twse'):
+    assert stock_type in {'twse', 'tpex'}
+    preprocessed_prices = []
+    for price in prices:
+        year, month, day = price[0].split('/')
+        year = str(int(year) + 1911)
+        price = [p.replace(',', '') for p in price[1:]]
+        if stock_type == 'tpex':
+            for i in range(2):
+                # 因為前兩項是仟股、仟元
+                price[i] = str(int(price[i]) * 1000)
+        price[-2] = price[-2].replace('+', '')
+        price = [year, month, day] + price
+        preprocessed_prices.append(price)
+    return preprocessed_prices
+
+def no_data(results, stock_type):
+    return ((stock_type == 'twse' and results.get('stat', '') == '很抱歉，沒有符合條件的資料!')
+            or (stock_type == 'tpex' and not results['aaData']))
 
 def request_twse_prices(stock_id, year, month):
     params = {
