@@ -15,6 +15,7 @@ def compute_sentiments(content):
 
 class CmoneyAttrs:
     def __init__(self, post):
+        self.id = post['ArtId']
         self.stock = post['MentionTags'][0]['CommKey']
         self.like_count = int(post['ArtLkdCnt'])
         self.reply_count = int(post['ArtRepdCnt'])
@@ -50,6 +51,7 @@ class CommentsSentiments:
 
 class PttAttrs:
     def __init__(self, post):
+        self.id = post['id']
         self.stock = post['stock'][0]
         self.push_count = sum(cmt['push'] == '推' for cmt in post['comment'])
         self.reply_count = len(post['comment'])
