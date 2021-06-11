@@ -16,7 +16,6 @@ def adjust_dt(raw_dt):
         dt = raw_dt - timedelta(days=1)
     else:
         dt = raw_dt
-    dt = datetime(dt.year, dt.month, dt.day)
     return dt
 
 def get_backoff_span(dt):
