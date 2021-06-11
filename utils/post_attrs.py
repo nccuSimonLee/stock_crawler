@@ -1,6 +1,8 @@
+import abc
 from bs4 import BeautifulSoup as bs, NavigableString
 from snownlp import SnowNLP
 from opencc import OpenCC
+import numpy as np
 from .adjust_time import cmoney_time_to_dt, ptt_time_to_dt, adjust_dt
 
 
@@ -33,6 +35,19 @@ class CmoneyAttrs:
         return '\n'.join(content)
 
 
+class CommentsSentiments:
+    def __init__(self, comments):
+        self.scores = np.array(
+            [compute_sentiments(comment['message'])
+             for comment in comments]
+        )
+        self.mean = np.mean(self.scores)
+        self.median = np.median(self.scores)
+        self.std = np.std(self.scores)
+        self.pushs = np.array([-1 if comment['push'] == '噓' else 1
+                               for comment in comments])
+
+
 class PttAttrs:
     def __init__(self, post):
         self.stock = post['stock'][0]
@@ -42,3 +57,4 @@ class PttAttrs:
         self.char_count = len(self.content.replace('\n', ''))
         self.adjst_dt = adjust_dt(ptt_time_to_dt(post['time']))
         self.sentiments = compute_sentiments(self.content)
+        self.comments_sentiments = CommentsSentiments(post['comment'])
