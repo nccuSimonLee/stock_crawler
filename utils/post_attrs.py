@@ -10,6 +10,8 @@ from .adjust_time import cmoney_time_to_dt, ptt_time_to_dt, adjust_dt
 T2S = OpenCC('t2s')
 
 def compute_sentiments(content):
+    if not content:
+        return 0.5
     return SnowNLP(T2S.convert(content)).sentiments
 
 
