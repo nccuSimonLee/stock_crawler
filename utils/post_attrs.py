@@ -1,5 +1,5 @@
-import abc
 from bs4 import BeautifulSoup as bs, NavigableString
+from datetime import datetime, timedelta
 from snownlp import SnowNLP
 from opencc import OpenCC
 import numpy as np
@@ -51,6 +51,25 @@ class CommentsSentiments:
                                for comment in comments])
 
 
+def filter_ptt_comments(comments, post_dt):
+    filtered_comments = []
+    deadline = get_dead_line(post_dt)
+    for comment in comments:
+        time_str = f'{post_dt.year}/{comment["time"]}'
+        try:
+            comment_dt = datetime.strptime(time_str, '%Y/%m/%d %H:%M')
+        except:
+            continue
+        if comment_dt < deadline:
+            filtered_comments.append(comment)
+    return filtered_comments
+
+def get_dead_line(post_dt):
+    deadline = datetime(post_dt.year, post_dt.month, post_dt.day, 13, 30, 0)
+    deadline += timedelta(days=1)
+    return deadline
+
+
 class PttAttrs:
     def __init__(self, post):
         self.id = post['id']
@@ -61,4 +80,6 @@ class PttAttrs:
         self.char_count = len(self.content.replace('\n', ''))
         self.adjst_dt = adjust_dt(ptt_time_to_dt(post['time']))
         self.sentiments = compute_sentiments(self.content)
-        self.comments_sentiments = CommentsSentiments(post['comment'])
+
+        filtered_comments = filter_ptt_comments(post['comment'], self.adjst_dt)
+        self.comments_sentiments = CommentsSentiments(filtered_comments)
